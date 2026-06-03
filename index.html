@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How Big Is My Browser?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1c1c28;
+      --border: rgba(255, 255, 255, 0.06);
+      --border2: rgba(255, 255, 255, 0.12);
+      --text: #f0eeff;
+      --muted: rgba(240, 238, 255, 0.45);
+      --accent: #7c6fff;
+      --accent2: #a78bfa;
+      --glow: rgba(124, 111, 255, 0.18);
+      --green: #34d399;
+      --amber: #fbbf24;
+      --coral: #f87171;
+      --teal: #2dd4bf;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 4rem 1rem 3rem;
+      position: relative;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124, 111, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124, 111, 255, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glow orb */
+    body::after {
+      content: '';
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124, 111, 255, 0.08) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: var(--accent2);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .eyebrow::before,
+    .eyebrow::after {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: var(--accent2);
+      opacity: 0.5;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #f0eeff 30%, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Main dimensions display */
+    .hero-card {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 24px;
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124, 111, 255, 0.6), transparent);
+    }
+
+    .dims-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .dim-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .dim-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .dim-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      transition: all 0.15s ease;
+    }
+
+    .dim-value.flash {
+      color: var(--accent2);
+    }
+
+    .dim-unit {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .separator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 28px;
+      font-weight: 300;
+      padding-top: 1rem;
+      flex-shrink: 0;
+    }
+
+    .separator span {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      opacity: 0.5;
+    }
+
+    /* Live indicator */
+    .live-badge {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(52, 211, 153, 0.1);
+      border: 1px solid rgba(52, 211, 153, 0.2);
+      border-radius: 100px;
+      padding: 4px 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--green);
+    }
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.7);
+      }
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border2);
+    }
+
+    .stat-card .icon {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .stat-name {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-val {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.35rem;
+      color: var(--text);
+      transition: color 0.15s;
+    }
+
+    .stat-val.flash {
+      color: var(--accent2);
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Aspect ratio visualizer */
+    .ratio-section {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .ratio-info {
+      flex: 1;
+      min-width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ratio-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .ratio-value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 2.2rem;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      transition: color 0.15s;
+    }
+
+    .ratio-value.flash {
+      color: var(--accent2);
+    }
+
+    .ratio-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .ratio-canvas-wrap {
+      flex: 2;
+      min-width: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #ratioCanvas {
+      max-width: 100%;
+      border-radius: 6px;
+    }
+
+    /* DPR section */
+    .info-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .info-card .label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .info-card .value {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.6rem;
+      color: var(--text);
+      transition: color 0.15s;
+    }
+
+    .info-card .value.flash {
+      color: var(--accent2);
+    }
+
+    .info-card .note {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Breakpoint badge */
+    .bp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    /* Resize hint */
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.06em;
+      opacity: 0.6;
+    }
+
+    /* Diagonal ruler overlay on hero */
+    .ruler-h,
+    .ruler-v {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .ruler-h {
+      bottom: 1rem;
+      left: 2.5rem;
+      right: 2.5rem;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124, 111, 255, 0.3), transparent);
+      display: flex;
+      align-items: center;
+    }
+
+    .ruler-v {
+      right: 1.5rem;
+      top: 3.5rem;
+      bottom: 1.5rem;
+      width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(124, 111, 255, 0.3), transparent);
+    }
+
+    @media (max-width: 540px) {
+      .separator {
+        display: none;
+      }
+
+      .dims-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .info-row {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-card {
+        padding-top: 4rem;
+      }
+
+      .live-badge {
+        top: 1rem;
+        right: 1rem;
+      }
+
+      .dim-block {
+        min-width: 0;
+      }
+
+      .ruler-v,
+      .ruler-h {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <header>
+      <div class="eyebrow">Window Inspector</div>
+      <h1>How Big Is My Browser?</h1>
+      <p class="subtitle">Live measurements of your outer browser window</p>
+    </header>
+
+    <!-- Main hero card -->
+    <div class="hero-card">
+      <div class="live-badge">
+        <div class="pulse-dot"></div>
+        LIVE
+      </div>
+
+      <div class="dims-row">
+        <div class="dim-block">
+          <span class="dim-label">Width</span>
+          <span class="dim-value" id="outerW">—</span>
+          <span class="dim-unit">pixels</span>
+        </div>
+        <div class="separator">
+          ×
+          <span>outer</span>
+        </div>
+        <div class="dim-block">
+          <span class="dim-label">Height</span>
+          <span class="dim-value" id="outerH">—</span>
+          <span class="dim-unit">pixels</span>
+        </div>
+      </div>
+
+      <div class="ruler-h"></div>
+      <div class="ruler-v"></div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.5" style="color:var(--accent2)">
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <path d="M8 21h8M12 17v4" />
+        </svg>
+        <span class="stat-name">Inner Width</span>
+        <span class="stat-val" id="innerW">—</span>
+        <span class="stat-sub">viewport px</span>
+      </div>
+      <div class="stat-card">
+        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.5" style="color:var(--teal)">
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <path d="M8 21h8M12 17v4" />
+        </svg>
+        <span class="stat-name">Inner Height</span>
+        <span class="stat-val" id="innerH">—</span>
+        <span class="stat-sub">viewport px</span>
+      </div>
+      <div class="stat-card">
+        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.5" style="color:var(--amber)">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20" />
+        </svg>
+        <span class="stat-name">Screen Size</span>
+        <span class="stat-val" id="screenSize">—</span>
+        <span class="stat-sub">display resolution</span>
+      </div>
+      <div class="stat-card">
+        <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.5" style="color:var(--coral)">
+          <path d="M21 3H3v7h18V3zM21 14H3v7h18v-7z" />
+        </svg>
+        <span class="stat-name">Total Pixels</span>
+        <span class="stat-val" id="totalPx">—</span>
+        <span class="stat-sub">outer window area</span>
+      </div>
+    </div>
+
+    <!-- Aspect ratio visualizer -->
+    <div class="ratio-section">
+      <div class="ratio-info">
+        <span class="ratio-label">Aspect Ratio</span>
+        <span class="ratio-value" id="ratioText">—</span>
+        <span class="ratio-desc" id="ratioDesc">Resize your window to see the ratio update live.</span>
+      </div>
+      <div class="ratio-canvas-wrap">
+        <canvas id="ratioCanvas" width="320" height="120"></canvas>
+      </div>
+    </div>
+
+    <!-- DPR + Breakpoint row -->
+    <div class="info-row">
+      <div class="info-card">
+        <span class="label">Device Pixel Ratio</span>
+        <span class="value" id="dprVal">—</span>
+        <span class="note" id="dprNote">Ratio of physical to CSS pixels on your display.</span>
+      </div>
+      <div class="info-card">
+        <span class="label">CSS Breakpoint</span>
+        <span class="value" id="bpName" style="font-size:1.1rem; margin-top:4px;">—</span>
+        <div id="bpBadge" class="bp-badge" style="display:none;"></div>
+        <span class="note" id="bpNote">Based on inner viewport width.</span>
+      </div>
+    </div>
+
+    <p class="hint">↔ Resize your browser window to see values update in real time</p>
+  </div>
+
+  <script>
+    const outerWEl = document.getElementById('outerW');
+    const outerHEl = document.getElementById('outerH');
+    const innerWEl = document.getElementById('innerW');
+    const innerHEl = document.getElementById('innerH');
+    const screenEl = document.getElementById('screenSize');
+    const totalEl = document.getElementById('totalPx');
+    const ratioText = document.getElementById('ratioText');
+    const ratioDesc = document.getElementById('ratioDesc');
+    const dprVal = document.getElementById('dprVal');
+    const dprNote = document.getElementById('dprNote');
+    const bpName = document.getElementById('bpName');
+    const bpBadge = document.getElementById('bpBadge');
+    const bpNote = document.getElementById('bpNote');
+    const canvas = document.getElementById('ratioCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+
+    function getBreakpoint(w) {
+      if (w < 480) return { name: 'xs', label: '< 480px', color: '#f87171', bg: 'rgba(248,113,113,0.12)' };
+      if (w < 640) return { name: 'sm', label: '≥ 480px', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' };
+      if (w < 768) return { name: 'md', label: '≥ 640px', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' };
+      if (w < 1024) return { name: 'lg', label: '≥ 768px', color: '#2dd4bf', bg: 'rgba(45,212,191,0.12)' };
+      if (w < 1280) return { name: 'xl', label: '≥ 1024px', color: '#34d399', bg: 'rgba(52,211,153,0.12)' };
+      if (w < 1536) return { name: '2xl', label: '≥ 1280px', color: '#7c6fff', bg: 'rgba(124,111,255,0.12)' };
+      return { name: '3xl', label: '≥ 1536px', color: '#7c6fff', bg: 'rgba(124,111,255,0.12)' };
+    }
+
+    function getRatioDesc(g) {
+      const common = {
+        '16:9': 'Widescreen — the standard for HD video and modern displays.',
+        '4:3': 'Classic — traditional TV and monitor ratio.',
+        '21:9': 'Ultrawide — cinematic format.',
+        '16:10': 'Golden ratio — popular for laptops and productivity.',
+        '1:1': 'Square — perfect symmetry.',
+        '3:2': 'Photography standard — used in DSLRs and many laptops.',
+        '5:4': 'Near-square — older monitors and prints.',
+        '32:9': 'Super-ultrawide — dual-monitor territory.',
+      };
+      return common[g] || 'Custom ratio — unique to your window size.';
+    }
+
+    function drawRatio(w, h) {
+      const cw = canvas.width;
+      const ch = canvas.height;
+      ctx.clearRect(0, 0, cw, ch);
+
+      const padding = 12;
+      const maxW = cw - padding * 2;
+      const maxH = ch - padding * 2;
+      const aspect = w / h;
+      let rw, rh;
+      if (aspect >= maxW / maxH) {
+        rw = maxW; rh = rw / aspect;
+      } else {
+        rh = maxH; rw = rh * aspect;
+      }
+      const rx = (cw - rw) / 2;
+      const ry = (ch - rh) / 2;
+
+      // Glow
+      const grd = ctx.createLinearGradient(rx, ry, rx + rw, ry + rh);
+      grd.addColorStop(0, 'rgba(124,111,255,0.18)');
+      grd.addColorStop(1, 'rgba(45,212,191,0.10)');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.roundRect(rx, ry, rw, rh, 6);
+      ctx.fill();
+
+      // Border
+      ctx.strokeStyle = 'rgba(124,111,255,0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Diagonal
+      ctx.strokeStyle = 'rgba(167,139,250,0.25)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx + rw, ry + rh);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Corner markers
+      const m = 8;
+      ctx.strokeStyle = 'rgba(167,139,250,0.8)';
+      ctx.lineWidth = 1.5;
+      [[rx, ry, 1, 1], [rx + rw, ry, -1, 1], [rx, ry + rh, 1, -1], [rx + rw, ry + rh, -1, -1]].forEach(([cx, cy, dx, dy]) => {
+        ctx.beginPath();
+        ctx.moveTo(cx + dx * m, cy);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx, cy + dy * m);
+        ctx.stroke();
+      });
+
+      // Dimension labels
+      ctx.fillStyle = 'rgba(167,139,250,0.7)';
+      ctx.font = '10px DM Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(w + 'px', rx + rw / 2, ry + rh + 14);
+      ctx.save();
+      ctx.translate(rx - 12, ry + rh / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(h + 'px', 0, 0);
+      ctx.restore();
+    }
+
+    function flash(el) {
+      el.classList.add('flash');
+      setTimeout(() => el.classList.remove('flash'), 350);
+    }
+
+    let lastW = 0, lastH = 0;
+
+    function update() {
+      const ow = window.outerWidth;
+      const oh = window.outerHeight;
+      const iw = window.innerWidth;
+      const ih = window.innerHeight;
+      const sw = screen.width;
+      const sh = screen.height;
+      const dpr = window.devicePixelRatio || 1;
+      const total = ow * oh;
+      const g = gcd(ow, oh);
+      const ratioW = ow / g;
+      const ratioH = oh / g;
+      const ratioStr = ratioW + ':' + ratioH;
+
+      if (ow !== lastW || oh !== lastH) {
+        [outerWEl, outerHEl, innerWEl, innerHEl, ratioText, totalEl].forEach(flash);
+        lastW = ow; lastH = oh;
+      }
+
+      outerWEl.textContent = ow;
+      outerHEl.textContent = oh;
+      innerWEl.textContent = iw;
+      innerHEl.textContent = ih;
+      screenEl.textContent = sw + ' × ' + sh;
+      totalEl.textContent = (total / 1e6).toFixed(2) + 'M';
+
+      ratioText.textContent = ratioStr;
+      ratioDesc.textContent = getRatioDesc(ratioStr);
+
+      dprVal.textContent = dpr.toFixed(2) + '×';
+      dprNote.textContent = dpr >= 2
+        ? 'Retina / HiDPI display. 1 CSS px = ' + dpr + ' physical px.'
+        : 'Standard display. 1 CSS px = 1 physical px.';
+
+      const bp = getBreakpoint(iw);
+      bpName.textContent = bp.name;
+      bpBadge.style.display = 'inline-flex';
+      bpBadge.style.background = bp.bg;
+      bpBadge.style.color = bp.color;
+      bpBadge.style.border = '1px solid ' + bp.color + '33';
+      bpBadge.textContent = bp.label;
+      bpNote.textContent = 'Tailwind-style breakpoint for ' + iw + 'px viewport.';
+
+      drawRatio(ow, oh);
+    }
+
+    window.addEventListener('resize', update);
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', update);
+      window.visualViewport.addEventListener('scroll', update);
+    }
+
+    window.addEventListener('deviceorientation', update);
+
+    let lastDPR = window.devicePixelRatio;
+    function pollDPR() {
+      const dpr = window.devicePixelRatio;
+      if (dpr !== lastDPR) {
+        lastDPR = dpr;
+        update();
+      }
+    }
+
+    update();
+    setInterval(update, 100);
+    setInterval(pollDPR, 50);
+  </script>
+</body>
+
+</html>

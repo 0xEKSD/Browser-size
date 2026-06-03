@@ -2,6 +2,27 @@
 
 A modern, real-time browser window inspector that displays detailed information about your browser window, viewport, screen, and display characteristics.
 
+## Screenshots
+
+### Desktop View
+
+
+<p align="center">
+  <img src="screenshots/desktop.png" width="70%">
+</p>
+
+### Mobile View
+
+<p align="center">
+  <img src="screenshots/mobile.png" width="30%">
+</p>
+
+### Tablet View
+
+<p align="center">
+  <img src="screenshots/tablet.png" width="40%">
+</p>
+
 ## Preview
 
 Live measurements update instantly as you resize your browser window, including:
@@ -14,20 +35,6 @@ Live measurements update instantly as you resize your browser window, including:
 - Device Pixel Ratio (DPR)
 - Responsive breakpoint detection
 - Visual aspect-ratio preview
-
-## Screenshots
-
-### Desktop View
-
-![Desktop Screenshot](screenshots/desktop.png)
-
-### Mobile View
-
-![Mobile Screenshot](screenshots/mobile.png)
-
-### Tablet View
-
-![Tablet Screenshot](screenshots/tablet.png)
 
 ## Features
 

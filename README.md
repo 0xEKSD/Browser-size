@@ -1,6 +1,6 @@
 # How Big Is My Browser?
 
-A modern, real-time browser window inspector that displays detailed information about your browser window, viewport, screen, and display characteristics.
+A modern, real-time browser window inspector that displays detailed information about your browser window, viewport, screen, and display characteristics. [Live Check Here](https://0xeksd.github.io/Browser-size/)
 
 ## Screenshots
 
